@@ -14,7 +14,7 @@ func main() {
 }
 
 func calculateBestStrategy(random int) (strategy.IStrategy, error) {
-	if random > 10 {
+	if random > 20 {
 		return strategy.NewSimpleRetryStrategy(3)
 	} else {
 		return strategy.NewExponentialRetryStrategy(3, 1)
