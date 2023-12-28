@@ -7,7 +7,6 @@ import (
 	"tweetPeek/strategy"
 )
 
-// strategy as parameter
 func main() {
 	retryStrategy, _ := calculateBestStrategy(rand.Intn(20))
 	strResp := retryStrategy.Apply(calling)
