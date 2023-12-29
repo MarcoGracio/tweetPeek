@@ -1,34 +1,29 @@
 package strategy
 
 import (
-	"errors"
 	"io"
 	"net/http"
 )
 
 type simpleRetryStrategy struct {
-	baseStrategy
-	maxRetries int
+	*baseStrategy
 }
 
 func NewSimpleRetryStrategy(maxRetries int) (*simpleRetryStrategy, error) {
-	if maxRetries <= 0 {
-		return nil, errors.New("max retries must be greater than 0")
-	}
-
-	return &simpleRetryStrategy{baseStrategy{}, maxRetries}, nil
+	strategy, err := NewBaseStrategy(maxRetries)
+	return &simpleRetryStrategy{baseStrategy: strategy}, err
 }
 
-func (strategy *simpleRetryStrategy) Apply(calling call) string {
+func (strategy *simpleRetryStrategy) Apply(processRequest requestProcessor) string {
 	var resp *http.Response
 	var err error
-	for i := 0; i < (*strategy).maxRetries; i++ {
-		resp, err = calling(i)
+	for strategy.currentAttempt = 1; strategy.currentAttempt <= strategy.maxRetries; strategy.currentAttempt++ {
+		resp, err = processRequest(strategy.currentAttempt)
 
 		if err == nil && resp != nil && resp.StatusCode >= 200 && resp.StatusCode < 300 {
 			defer resp.Body.Close()
 			responseBody, _ := io.ReadAll(resp.Body)
-			tweet := strategy.baseStrategy.sanitizeHtmlToTweet(string(responseBody))
+			tweet := strategy.sanitizeHtmlToTweet(string(responseBody))
 			return "simpleRetryStrategy" + "\n" + tweet
 		}
 	}

@@ -1,22 +1,33 @@
 package strategy
 
 import (
+	"errors"
 	"net/http"
 	"strings"
 
 	"github.com/microcosm-cc/bluemonday"
 )
 
-type call func(int) (*http.Response, error)
+type requestProcessor func(int) (*http.Response, error)
 
 type IStrategy interface {
-	Apply(call) string
+	Apply(requestProcessor) string
+	GetCurrentAttempt() int
 }
 
 type baseStrategy struct {
+	maxRetries     int
+	currentAttempt int
 }
 
-func (baseStrategy) sanitizeHtmlToTweet(htmlToSanitize string) string {
+func NewBaseStrategy(maxRetries int) (*baseStrategy, error) {
+	if maxRetries <= 0 {
+		return nil, errors.New("max retries must be greater than 0")
+	}
+	return &baseStrategy{maxRetries: maxRetries}, nil
+}
+
+func (*baseStrategy) sanitizeHtmlToTweet(htmlToSanitize string) string {
 	p := bluemonday.StrictPolicy()
 	htmlSanitized := p.Sanitize(htmlToSanitize)
 
@@ -29,4 +40,8 @@ func (baseStrategy) sanitizeHtmlToTweet(htmlToSanitize string) string {
 	}
 
 	return htmlTextCleaned
+}
+
+func (strategy *baseStrategy) GetCurrentAttempt() int {
+	return strategy.currentAttempt
 }
