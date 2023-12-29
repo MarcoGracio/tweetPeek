@@ -9,12 +9,12 @@ type simpleRetryStrategy struct {
 	*baseStrategy
 }
 
-func NewSimpleRetryStrategy(maxRetries int) (*simpleRetryStrategy, error) {
+func NewSimpleRetryStrategy(maxRetries int) (simpleRetryStrategy, error) {
 	strategy, err := NewBaseStrategy(maxRetries)
-	return &simpleRetryStrategy{baseStrategy: strategy}, err
+	return simpleRetryStrategy{baseStrategy: strategy}, err
 }
 
-func (strategy *simpleRetryStrategy) Apply(processRequest requestProcessor) string {
+func (strategy simpleRetryStrategy) Apply(processRequest requestProcessor) string {
 	var resp *http.Response
 	var err error
 	for strategy.currentAttempt = 1; strategy.currentAttempt <= strategy.maxRetries; strategy.currentAttempt++ {

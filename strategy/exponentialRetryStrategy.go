@@ -12,17 +12,17 @@ type exponentialRetryStrategy struct {
 	initialBackoffSeconds int
 }
 
-func NewExponentialRetryStrategy(maxRetries int, initialBackoffSeconds int) (*exponentialRetryStrategy, error) {
+func NewExponentialRetryStrategy(maxRetries int, initialBackoffSeconds int) (exponentialRetryStrategy, error) {
 	if initialBackoffSeconds <= 0 {
-		return nil, errors.New("not negative backoff allowed")
+		return exponentialRetryStrategy{}, errors.New("not negative backoff allowed")
 	}
 
 	strategy, err := NewBaseStrategy(maxRetries)
 
-	return &exponentialRetryStrategy{baseStrategy: strategy, initialBackoffSeconds: initialBackoffSeconds}, err
+	return exponentialRetryStrategy{baseStrategy: strategy, initialBackoffSeconds: initialBackoffSeconds}, err
 }
 
-func (strategy *exponentialRetryStrategy) Apply(request requestProcessor) string {
+func (strategy exponentialRetryStrategy) Apply(request requestProcessor) string {
 	var resp *http.Response
 	var err error
 

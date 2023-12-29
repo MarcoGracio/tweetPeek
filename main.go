@@ -17,12 +17,11 @@ func main() {
 }
 
 func calculateBestStrategy(random int) (strategy.IStrategy, error) {
-	return strategy.NewSimpleRetryStrategy(3)
-	// if random > 10 {
-	// 	return strategy.NewSimpleRetryStrategy(3)
-	// } else {
-	// 	return strategy.NewExponentialRetryStrategy(3, 1)
-	// }
+	if random > 10 {
+		return strategy.NewSimpleRetryStrategy(3)
+	} else {
+		return strategy.NewExponentialRetryStrategy(3, 1)
+	}
 }
 
 func requestProcessor(currentAttempt int) (*http.Response, error) {
