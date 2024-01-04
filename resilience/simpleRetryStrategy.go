@@ -1,8 +1,10 @@
-package strategy
+package resilience
 
 import (
-	"io"
+	"errors"
+	"fmt"
 	"net/http"
+	"tweetPeek/textProcessor"
 )
 
 type simpleRetryStrategy struct {
@@ -14,7 +16,8 @@ func NewSimpleRetryStrategy(maxRetries int) (simpleRetryStrategy, error) {
 	return simpleRetryStrategy{baseStrategy: strategy}, err
 }
 
-func (strategy simpleRetryStrategy) Apply(processRequest requestProcessor) string {
+func (strategy simpleRetryStrategy) Apply(processRequest requestProcessor) (textProcessor.Tweets, error) {
+	fmt.Println("simpleRetryStrategy")
 	var resp *http.Response
 	var err error
 	for strategy.currentAttempt = 1; strategy.currentAttempt <= strategy.maxRetries; strategy.currentAttempt++ {
@@ -22,15 +25,13 @@ func (strategy simpleRetryStrategy) Apply(processRequest requestProcessor) strin
 
 		if err == nil && resp != nil && resp.StatusCode >= 200 && resp.StatusCode < 300 {
 			defer resp.Body.Close()
-			responseBody, _ := io.ReadAll(resp.Body)
-			tweet := strategy.sanitizeHtmlToTweet(string(responseBody))
-			return "simpleRetryStrategy" + "\n" + tweet
+			return strategy.sanitizeBodyToTweets(resp.Body), nil
 		}
 	}
 
 	if err != nil {
-		return err.Error()
+		return nil, err
 	} else {
-		return "Failed to get a valid response."
+		return nil, errors.New("failed to get a valid response")
 	}
 }

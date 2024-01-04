@@ -1,9 +1,11 @@
-package strategy
+package resilience
 
 import (
 	"errors"
+	"io"
 	"net/http"
 	"strings"
+	"tweetPeek/textProcessor"
 
 	"github.com/microcosm-cc/bluemonday"
 )
@@ -11,7 +13,7 @@ import (
 type requestProcessor func(int) (*http.Response, error)
 
 type IStrategy interface {
-	Apply(requestProcessor) string
+	Apply(requestProcessor) (textProcessor.Tweets, error)
 	GetCurrentAttempt() int
 }
 
@@ -27,19 +29,16 @@ func NewBaseStrategy(maxRetries int) (*baseStrategy, error) {
 	return &baseStrategy{maxRetries: maxRetries}, nil
 }
 
-func (*baseStrategy) sanitizeHtmlToTweet(htmlToSanitize string) string {
+func (*baseStrategy) sanitizeBodyToTweets(body io.ReadCloser) textProcessor.Tweets {
+	responseBody, _ := io.ReadAll(body)
+
 	p := bluemonday.StrictPolicy()
-	htmlSanitized := p.Sanitize(htmlToSanitize)
+	htmlSanitized := p.Sanitize(string(responseBody))
 
 	fields := strings.Fields(string(htmlSanitized))
 	htmlTextCleaned := strings.Join(fields, " ")
 
-	const textMaxLen = 280
-	if len(htmlTextCleaned) > textMaxLen {
-		htmlTextCleaned = htmlTextCleaned[:textMaxLen]
-	}
-
-	return htmlTextCleaned
+	return textProcessor.Tweets{}.Get(htmlTextCleaned, 3)
 }
 
 func (strategy *baseStrategy) GetCurrentAttempt() int {

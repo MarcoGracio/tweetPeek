@@ -1,10 +1,10 @@
-package strategy
+package resilience
 
 import (
 	"errors"
-	"io"
 	"net/http"
 	"time"
+	"tweetPeek/textProcessor"
 )
 
 type exponentialRetryStrategy struct {
@@ -14,7 +14,7 @@ type exponentialRetryStrategy struct {
 
 func NewExponentialRetryStrategy(maxRetries int, initialBackoffSeconds int) (exponentialRetryStrategy, error) {
 	if initialBackoffSeconds <= 0 {
-		return exponentialRetryStrategy{}, errors.New("not negative backoff allowed")
+		return exponentialRetryStrategy{}, errors.New("no negative backoff allowed")
 	}
 
 	strategy, err := NewBaseStrategy(maxRetries)
@@ -22,20 +22,19 @@ func NewExponentialRetryStrategy(maxRetries int, initialBackoffSeconds int) (exp
 	return exponentialRetryStrategy{baseStrategy: strategy, initialBackoffSeconds: initialBackoffSeconds}, err
 }
 
-func (strategy exponentialRetryStrategy) Apply(request requestProcessor) string {
+func (strategy exponentialRetryStrategy) Apply(processRequest requestProcessor) (textProcessor.Tweets, error) {
+	println("exponentialRetryStrategy")
 	var resp *http.Response
 	var err error
 
 	waitTime := time.Duration(strategy.initialBackoffSeconds) * time.Second
 
 	for strategy.currentAttempt = 1; strategy.currentAttempt <= strategy.maxRetries; strategy.currentAttempt++ {
-		resp, err = request(strategy.currentAttempt)
+		resp, err = processRequest(strategy.currentAttempt)
 
 		if err == nil && resp != nil && resp.StatusCode >= 200 && resp.StatusCode < 300 {
 			defer resp.Body.Close()
-			responseBody, _ := io.ReadAll(resp.Body)
-			tweet := strategy.sanitizeHtmlToTweet(string(responseBody))
-			return "exponentialRetryStrategy" + "\n" + tweet
+			return strategy.sanitizeBodyToTweets(resp.Body), nil
 		}
 
 		time.Sleep(waitTime)
@@ -43,8 +42,8 @@ func (strategy exponentialRetryStrategy) Apply(request requestProcessor) string 
 	}
 
 	if err != nil {
-		return err.Error()
+		return nil, err
 	} else {
-		return "Failed to get a valid response."
+		return nil, errors.New("failed to get a valid response")
 	}
 }
