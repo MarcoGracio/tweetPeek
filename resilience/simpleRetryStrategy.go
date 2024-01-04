@@ -3,8 +3,8 @@ package resilience
 import (
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
-	"tweetPeek/textProcessor"
 )
 
 type simpleRetryStrategy struct {
@@ -16,7 +16,7 @@ func NewSimpleRetryStrategy(maxRetries int) (simpleRetryStrategy, error) {
 	return simpleRetryStrategy{baseStrategy: strategy}, err
 }
 
-func (strategy simpleRetryStrategy) Apply(processRequest requestProcessor) (textProcessor.Tweets, error) {
+func (strategy simpleRetryStrategy) Apply(processRequest requestProcessor) ([]byte, error) {
 	fmt.Println("simpleRetryStrategy")
 	var resp *http.Response
 	var err error
@@ -24,8 +24,9 @@ func (strategy simpleRetryStrategy) Apply(processRequest requestProcessor) (text
 		resp, err = processRequest(strategy.currentAttempt)
 
 		if err == nil && resp != nil && resp.StatusCode >= 200 && resp.StatusCode < 300 {
+			body, _ := io.ReadAll(resp.Body)
 			defer resp.Body.Close()
-			return strategy.sanitizeBodyToTweets(resp.Body), nil
+			return body, nil
 		}
 	}
 

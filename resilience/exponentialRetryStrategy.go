@@ -2,9 +2,9 @@ package resilience
 
 import (
 	"errors"
+	"io"
 	"net/http"
 	"time"
-	"tweetPeek/textProcessor"
 )
 
 type exponentialRetryStrategy struct {
@@ -22,7 +22,7 @@ func NewExponentialRetryStrategy(maxRetries int, initialBackoffSeconds int) (exp
 	return exponentialRetryStrategy{baseStrategy: strategy, initialBackoffSeconds: initialBackoffSeconds}, err
 }
 
-func (strategy exponentialRetryStrategy) Apply(processRequest requestProcessor) (textProcessor.Tweets, error) {
+func (strategy exponentialRetryStrategy) Apply(processRequest requestProcessor) ([]byte, error) {
 	println("exponentialRetryStrategy")
 	var resp *http.Response
 	var err error
@@ -33,8 +33,9 @@ func (strategy exponentialRetryStrategy) Apply(processRequest requestProcessor) 
 		resp, err = processRequest(strategy.currentAttempt)
 
 		if err == nil && resp != nil && resp.StatusCode >= 200 && resp.StatusCode < 300 {
+			body, _ := io.ReadAll(resp.Body)
 			defer resp.Body.Close()
-			return strategy.sanitizeBodyToTweets(resp.Body), nil
+			return body, nil
 		}
 
 		time.Sleep(waitTime)
