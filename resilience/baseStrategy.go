@@ -5,10 +5,10 @@ import (
 	"net/http"
 )
 
-type requestProcessor func(int) (*http.Response, error)
+type RequestProcessor func(int) (*http.Response, error)
 
 type IStrategy interface {
-	Apply(requestProcessor) ([]byte, error)
+	Apply(RequestProcessor) ([]byte, error)
 	GetCurrentAttempt() int
 }
 

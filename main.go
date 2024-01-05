@@ -10,27 +10,23 @@ import (
 )
 
 func main() {
+	process(requestProcessor)
+
+	fmt.Printf("\n\n")
+
+	process(func(currentAttempt int) (*http.Response, error) {
+		return http.Get("https://en.wikipedia.org/wiki/Portugal")
+	})
+}
+
+func process(request resilience.RequestProcessor) {
 	retryStrategy, _ := calculateBestStrategy(rand.Intn(20))
-	responseBody, err := retryStrategy.Apply(requestProcessor)
+	responseBody, err := retryStrategy.Apply(request)
 	if err != nil {
 		fmt.Println("fatal error")
 		return
 	}
 	pageTwitter := textProcessor.NewPageTwitter(3, 80, responseBody)
-	fmt.Printf("Attempt nr: %v \n", strconv.Itoa(retryStrategy.GetCurrentAttempt()))
-	pageTwitter.ThreadOfTwitts.PrintTwitts()
-
-	fmt.Println("\n\n")
-
-	retryStrategy, _ = calculateBestStrategy(rand.Intn(20))
-	responseBody, err = retryStrategy.Apply(func(currentAttempt int) (*http.Response, error) {
-		return http.Get("https://en.wikipedia.org/wiki/Portugal")
-	})
-	if err != nil {
-		fmt.Println("fatal error")
-		return
-	}
-	pageTwitter = textProcessor.NewPageTwitter(3, 80, responseBody)
 	fmt.Printf("Attempt nr: %v \n", strconv.Itoa(retryStrategy.GetCurrentAttempt()))
 	pageTwitter.ThreadOfTwitts.PrintTwitts()
 }

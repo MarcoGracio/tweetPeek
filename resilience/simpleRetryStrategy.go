@@ -16,17 +16,20 @@ func NewSimpleRetryStrategy(maxRetries int) (simpleRetryStrategy, error) {
 	return simpleRetryStrategy{baseStrategy: strategy}, err
 }
 
-func (strategy simpleRetryStrategy) Apply(processRequest requestProcessor) ([]byte, error) {
+func (strategy simpleRetryStrategy) Apply(processRequest RequestProcessor) ([]byte, error) {
 	fmt.Println("simpleRetryStrategy")
 	var resp *http.Response
 	var err error
 	for strategy.currentAttempt = 1; strategy.currentAttempt <= strategy.maxRetries; strategy.currentAttempt++ {
 		resp, err = processRequest(strategy.currentAttempt)
 
-		if err == nil && resp != nil && resp.StatusCode >= 200 && resp.StatusCode < 300 {
-			body, _ := io.ReadAll(resp.Body)
+		if resp != nil {
 			defer resp.Body.Close()
-			return body, nil
+
+			if err == nil && resp.StatusCode >= 200 && resp.StatusCode < 300 {
+				body, _ := io.ReadAll(resp.Body)
+				return body, nil
+			}
 		}
 	}
 

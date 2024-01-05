@@ -7,15 +7,13 @@ import (
 )
 
 type PageTwitter struct {
-	nrMaxtwitts    int
-	twittLength    int
 	ThreadOfTwitts threadOfTwitts
 }
 
 func NewPageTwitter(nrMaxtwitts int, twittLenght int, data []byte) PageTwitter {
 	textCleaned := PageTwitter{}.sanitizeByteSlice(data)
 	threadOfTwitts := PageTwitter{}.getThreadOfTwitts(textCleaned, nrMaxtwitts, twittLenght)
-	return PageTwitter{nrMaxtwitts: nrMaxtwitts, twittLength: twittLenght, ThreadOfTwitts: threadOfTwitts}
+	return PageTwitter{ThreadOfTwitts: threadOfTwitts}
 }
 
 func (pageTwitter PageTwitter) sanitizeByteSlice(data []byte) string {

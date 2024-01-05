@@ -22,7 +22,7 @@ func NewExponentialRetryStrategy(maxRetries int, initialBackoffSeconds int) (exp
 	return exponentialRetryStrategy{baseStrategy: strategy, initialBackoffSeconds: initialBackoffSeconds}, err
 }
 
-func (strategy exponentialRetryStrategy) Apply(processRequest requestProcessor) ([]byte, error) {
+func (strategy exponentialRetryStrategy) Apply(processRequest RequestProcessor) ([]byte, error) {
 	println("exponentialRetryStrategy")
 	var resp *http.Response
 	var err error
@@ -32,10 +32,13 @@ func (strategy exponentialRetryStrategy) Apply(processRequest requestProcessor) 
 	for strategy.currentAttempt = 1; strategy.currentAttempt <= strategy.maxRetries; strategy.currentAttempt++ {
 		resp, err = processRequest(strategy.currentAttempt)
 
-		if err == nil && resp != nil && resp.StatusCode >= 200 && resp.StatusCode < 300 {
-			body, _ := io.ReadAll(resp.Body)
+		if resp != nil {
 			defer resp.Body.Close()
-			return body, nil
+
+			if err == nil && resp.StatusCode >= 200 && resp.StatusCode < 300 {
+				body, _ := io.ReadAll(resp.Body)
+				return body, nil
+			}
 		}
 
 		time.Sleep(waitTime)
