@@ -8,22 +8,23 @@ import (
 type RequestProcessor func(int) (*http.Response, error)
 
 type IStrategy interface {
-	Apply(RequestProcessor) ([]byte, error)
-	GetCurrentAttempt() int
+	Apply(RequestProcessor, chan ResponseStrategy, chan error)
 }
 
 type baseStrategy struct {
-	maxRetries     int
-	currentAttempt int
+	maxRetries int
+	name       string
 }
 
-func NewBaseStrategy(maxRetries int) (*baseStrategy, error) {
+type ResponseStrategy struct {
+	Body           []byte
+	CurrentAttempt int
+	StrategyName   string
+}
+
+func newBaseStrategy(maxRetries int, name string) (*baseStrategy, error) {
 	if maxRetries <= 0 {
 		return nil, errors.New("max retries must be greater than 0")
 	}
-	return &baseStrategy{maxRetries: maxRetries}, nil
-}
-
-func (strategy *baseStrategy) GetCurrentAttempt() int {
-	return strategy.currentAttempt
+	return &baseStrategy{maxRetries: maxRetries, name: name}, nil
 }
