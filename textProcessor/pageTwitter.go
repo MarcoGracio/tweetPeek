@@ -1,45 +1,57 @@
 package textProcessor
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/microcosm-cc/bluemonday"
 )
 
 type PageTwitter struct {
-	ThreadOfTwitts threadOfTwitts
+	ThreadOfTweets threadOfTweets
 }
 
-func NewPageTwitter(nrMaxtwitts int, twittLenght int, data []byte) PageTwitter {
-	textCleaned := PageTwitter{}.sanitizeByteSlice(data)
-	threadOfTwitts := PageTwitter{}.getThreadOfTwitts(textCleaned, nrMaxtwitts, twittLenght)
-	return PageTwitter{ThreadOfTwitts: threadOfTwitts}
+func NewPageTwitter(nrMaxTweets int, tweetLength int, data []byte) (PageTwitter, error) {
+	textCleaned, errSanitize := PageTwitter{}.sanitizeByteSlice(data)
+	if errSanitize != nil {
+		return PageTwitter{}, errSanitize
+	}
+	threadOfTweets, errThreadOfTweets := PageTwitter{}.getThreadOfTweets(textCleaned, nrMaxTweets, tweetLength)
+	if errThreadOfTweets != nil {
+		return PageTwitter{}, errThreadOfTweets
+	}
+	return PageTwitter{ThreadOfTweets: threadOfTweets}, nil
 }
 
-func (pageTwitter PageTwitter) sanitizeByteSlice(data []byte) string {
+func (PageTwitter) sanitizeByteSlice(data []byte) (string, error) {
+	if len(data) == 0 {
+		return "", fmt.Errorf("incorrect arguments: data=%v", data)
+	}
+
 	p := bluemonday.StrictPolicy()
 	htmlSanitized := p.Sanitize(string(data))
 
 	fields := strings.Fields(string(htmlSanitized))
-	return strings.Join(fields, " ")
+	return strings.Join(fields, " "), nil
 }
 
-func (PageTwitter) getThreadOfTwitts(htmlText string, nrMax int, twittLength int) threadOfTwitts {
-	var twitt string
-	var threadOfTwitts threadOfTwitts
-	for i := 0; i < len(htmlText); i += twittLength {
+func (PageTwitter) getThreadOfTweets(text string, nrMaxTweets int, tweetLength int) (threadOfTweets, error) {
+	if nrMaxTweets <= 0 || tweetLength <= 0 {
+		return threadOfTweets{}, fmt.Errorf("incorrect arguments: nrMaxTweets=%d, tweetLength=%d", nrMaxTweets, tweetLength)
+	}
 
-		if (i + twittLength) > len(htmlText) {
-			twitt = htmlText[i:]
+	var tweet string
+	var threadOfTweets threadOfTweets
+	for i := 0; i < len(text) && len(threadOfTweets) < nrMaxTweets; i += tweetLength {
+
+		if (i + tweetLength) > len(text) {
+			tweet = text[i:]
 		} else {
-			twitt = htmlText[i:(i + twittLength)]
+			tweet = text[i:(i + tweetLength)]
 		}
 
-		threadOfTwitts = append(threadOfTwitts, twitt)
+		threadOfTweets = append(threadOfTweets, tweet)
 	}
 
-	if nrMax <= len(threadOfTwitts) {
-		return threadOfTwitts[:nrMax]
-	}
-	return threadOfTwitts
+	return threadOfTweets, nil
 }

@@ -14,8 +14,8 @@ import (
 
 func main() {
 	requestProcessors := []resilience.RequestProcessor{
-		requestProcessor,
-		requestProcessor,
+		requestExampleProcessor,
+		requestExampleProcessor,
 		func(currentAttempt int) (*http.Response, error) {
 			return http.Get("https://en.wikipedia.org/wiki/Portugal")
 		},
@@ -47,9 +47,13 @@ func process(requestProcessors []resilience.RequestProcessor) {
 				return
 			}
 		case responseStrategy := <-chanResponse[i]:
-			pageTwitter := textProcessor.NewPageTwitter(2, 80, responseStrategy.Body)
+			pageTwitter, err := textProcessor.NewPageTwitter(2, 80, responseStrategy.Body)
+			if err != nil {
+				fmt.Println("fatal error")
+				return
+			}
 			fmt.Printf("Strategy: %v - Attempt nr: %v \n", responseStrategy.StrategyName, strconv.Itoa(responseStrategy.CurrentAttempt))
-			pageTwitter.ThreadOfTwitts.PrintTwitts()
+			pageTwitter.ThreadOfTweets.PrintTweets()
 		}
 	}
 }
@@ -62,7 +66,7 @@ func calculateBestStrategy() (resilience.IStrategy, error) {
 	}
 }
 
-func requestProcessor(currentAttempt int) (*http.Response, error) {
+func requestExampleProcessor(currentAttempt int) (*http.Response, error) {
 	if currentAttempt < 2 {
 		return nil, nil
 	}

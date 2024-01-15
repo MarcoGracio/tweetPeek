@@ -1,0 +1,17 @@
+mode: set
+tweetPeek/main.go:15.13,19.52 1 0
+tweetPeek/main.go:19.52,21.4 1 0
+tweetPeek/main.go:24.2,24.28 1 0
+tweetPeek/main.go:27.63,32.47 3 0
+tweetPeek/main.go:32.47,40.3 4 0
+tweetPeek/main.go:42.2,42.35 1 0
+tweetPeek/main.go:42.35,43.10 1 0
+tweetPeek/main.go:44.31,45.18 1 0
+tweetPeek/main.go:45.18,48.5 2 0
+tweetPeek/main.go:49.46,52.44 3 0
+tweetPeek/main.go:57.60,58.24 1 0
+tweetPeek/main.go:58.24,60.3 1 0
+tweetPeek/main.go:60.8,62.3 1 0
+tweetPeek/main.go:65.74,66.24 1 1
+tweetPeek/main.go:66.24,68.3 1 1
+tweetPeek/main.go:69.2,69.40 1 0
