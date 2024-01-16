@@ -1,6 +1,5 @@
 // todo:
-// 2- tests
-// 3- containers
+// - remaining tests (pageTwitter is the only one)
 package main
 
 import (
